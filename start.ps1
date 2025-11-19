@@ -1,0 +1,81 @@
+# DeepFocus Start Script
+
+Write-Host ""
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host "       Starting DeepFocus" -ForegroundColor Cyan
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Check if .env exists
+if (-not (Test-Path .env)) {
+    Write-Host "⚠ Warning: .env file not found!" -ForegroundColor Yellow
+    Write-Host "Creating .env from template..." -ForegroundColor Yellow
+    Copy-Item .env.example .env
+    Write-Host ""
+    Write-Host "✓ Created .env file" -ForegroundColor Green
+    Write-Host "⚠ Please update the .env file with your configuration before starting!" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Generating a secure JWT secret..." -ForegroundColor Yellow
+    node generate-secret.js
+    Write-Host ""
+    Write-Host "Copy the secret above and paste it into your .env file as JWT_SECRET" -ForegroundColor Yellow
+    Write-Host ""
+    Read-Host "Press Enter after you've updated the .env file"
+}
+
+# Check if MongoDB is running
+Write-Host "Checking MongoDB connection..." -ForegroundColor Yellow
+try {
+    $mongoCheck = mongosh --eval "db.version()" --quiet 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "✓ MongoDB is running" -ForegroundColor Green
+    } else {
+        throw "MongoDB not running"
+    }
+} catch {
+    Write-Host "✗ MongoDB is not running!" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Please start MongoDB first:" -ForegroundColor Yellow
+    Write-Host "  net start MongoDB" -ForegroundColor White
+    Write-Host "  OR" -ForegroundColor White
+    Write-Host "  mongod --dbpath C:\data\db" -ForegroundColor White
+    Write-Host ""
+    exit 1
+}
+
+# Check if node_modules exists
+if (-not (Test-Path node_modules)) {
+    Write-Host ""
+    Write-Host "⚠ Dependencies not installed. Running installation..." -ForegroundColor Yellow
+    npm install
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "✗ Failed to install dependencies" -ForegroundColor Red
+        exit 1
+    }
+}
+
+if (-not (Test-Path client\node_modules)) {
+    Write-Host ""
+    Write-Host "⚠ Frontend dependencies not installed. Running installation..." -ForegroundColor Yellow
+    Set-Location client
+    npm install
+    Set-Location ..
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "✗ Failed to install frontend dependencies" -ForegroundColor Red
+        exit 1
+    }
+}
+
+Write-Host ""
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host "   Starting Development Server" -ForegroundColor Cyan
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Frontend: http://localhost:3000" -ForegroundColor Green
+Write-Host "Backend:  http://localhost:5000" -ForegroundColor Green
+Write-Host ""
+Write-Host "Press Ctrl+C to stop the servers" -ForegroundColor Yellow
+Write-Host ""
+
+# Start the application
+npm run dev
