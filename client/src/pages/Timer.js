@@ -8,8 +8,6 @@ const Timer = () => {
   const { goalId } = useParams();
   const navigate = useNavigate();
   const [goal, setGoal] = useState(null);
-  const [sessionLength, setSessionLength] = useState(25);
-  const [breakLength, setBreakLength] = useState(5);
   const { 
     timeLeft, 
     isRunning, 
@@ -20,7 +18,10 @@ const Timer = () => {
     pauseTimer,
     resumeTimer,
     resetTimer,
-    stopTimer
+    stopTimer,
+    sessionPlan,
+    currentSessionIndex,
+    skipBreak
   } = useTimer();
 
   useEffect(() => {
@@ -54,7 +55,7 @@ const Timer = () => {
   const handleToggleTimer = () => {
     if (!currentGoal) {
       // Start new timer
-      startTimer(goal, sessionLength, breakLength);
+      startTimer(goal);
     } else if (isRunning) {
       pauseTimer();
     } else {
@@ -68,11 +69,9 @@ const Timer = () => {
 
   const handleStopTimer = () => {
     stopTimer();
-    setSessionLength(25);
-    setBreakLength(5);
   };
 
-  const skipBreak = () => {
+  const handleSkipBreak = () => {
     stopTimer();
   };
 
@@ -82,13 +81,11 @@ const Timer = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Calculate progress based on current goal or local settings
-  const currentFocusDuration = currentGoal ? currentGoal.focusDuration || sessionLength : sessionLength;
-  const currentBreakDuration = currentGoal ? currentGoal.breakDuration || breakLength : breakLength;
-  
-  const progress = isBreak
-    ? ((currentBreakDuration * 60 - timeLeft) / (currentBreakDuration * 60)) * 100
-    : ((currentFocusDuration * 60 - timeLeft) / (currentFocusDuration * 60)) * 100;
+
+  // Calculate progress based on current session in plan
+  const currentSession = sessionPlan && sessionPlan.length > 0 ? sessionPlan[currentSessionIndex] : null;
+  const sessionTotalSeconds = currentSession ? currentSession.duration * 60 : 1;
+  const progress = ((sessionTotalSeconds - timeLeft) / sessionTotalSeconds) * 100;
 
   if (!goal) {
     return (
@@ -121,12 +118,13 @@ const Timer = () => {
           </div>
         </div>
 
+
         {/* Timer */}
         <div className="bg-white rounded-lg shadow p-8">
           <div className="text-center mb-8">
             <div className="inline-block px-4 py-2 bg-primary-100 rounded-full mb-4">
               <span className="text-primary-700 font-semibold">
-                {isBreak ? (
+                {currentSession?.type === 'break' ? (
                   <span className="flex items-center">
                     <Coffee className="w-4 h-4 mr-2" />
                     Break Time
@@ -136,7 +134,16 @@ const Timer = () => {
                 )}
               </span>
             </div>
-            
+            <div className="mb-2 text-gray-600 text-sm">
+              {sessionPlan.length > 0 && (
+                <>
+                  Session {currentSessionIndex + 1} of {sessionPlan.length} ({currentSession?.type === 'break' ? 'Break' : 'Focus'})<br />
+                  {sessionPlan.map((s, i) => (
+                    <span key={i} className={`inline-block w-3 h-3 mx-0.5 rounded-full ${i === currentSessionIndex ? (s.type === 'break' ? 'bg-green-500' : 'bg-primary-600') : 'bg-gray-300'}`}></span>
+                  ))}
+                </>
+              )}
+            </div>
             <div className="relative inline-block">
               <svg className="transform -rotate-90 w-64 h-64">
                 <circle
@@ -157,7 +164,7 @@ const Timer = () => {
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 120}`}
                   strokeDashoffset={`${2 * Math.PI * 120 * (1 - progress / 100)}`}
-                  className={isBreak ? 'text-green-500' : 'text-primary-600'}
+                  className={currentSession?.type === 'break' ? 'text-green-500' : 'text-primary-600'}
                   strokeLinecap="round"
                 />
               </svg>
@@ -187,7 +194,7 @@ const Timer = () => {
 
             {isBreak && (
               <button
-                onClick={skipBreak}
+                onClick={handleSkipBreak}
                 className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full font-medium"
               >
                 Skip Break
@@ -195,43 +202,7 @@ const Timer = () => {
             )}
           </div>
 
-          {/* Settings */}
-          {!currentGoal && (
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Session Settings</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Focus Length (minutes)
-                  </label>
-                  <input
-                    type="number"
-                    value={sessionLength}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value) || 1;
-                      setSessionLength(val);
-                    }}
-                    min={1}
-                    max={120}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Break Length (minutes)
-                  </label>
-                  <input
-                    type="number"
-                    value={breakLength}
-                    onChange={(e) => setBreakLength(parseInt(e.target.value) || 1)}
-                    min={1}
-                    max={30}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Settings removed: session structure is now automatic based on goal */}
         </div>
 
         {/* Back Button */}

@@ -19,6 +19,9 @@ export const TimerProvider = ({ children }) => {
   const [focusDuration, setFocusDuration] = useState(25);
   const [breakDuration, setBreakDuration] = useState(5);
   const [sessionsCompleted, setSessionsCompleted] = useState(0);
+  const [sessionPlan, setSessionPlan] = useState([]); // [{type: 'focus'|'break', duration: minutes}]
+  const [currentSessionIndex, setCurrentSessionIndex] = useState(0);
+  const [skipBreak, setSkipBreak] = useState(false);
   const intervalRef = useRef(null);
 
   // Load timer state from localStorage on mount
@@ -34,6 +37,9 @@ export const TimerProvider = ({ children }) => {
         setFocusDuration(state.focusDuration || 25);
         setBreakDuration(state.breakDuration || 5);
         setSessionsCompleted(state.sessionsCompleted || 0);
+        setSessionPlan(state.sessionPlan || []);
+        setCurrentSessionIndex(state.currentSessionIndex || 0);
+        setSkipBreak(state.skipBreak || false);
       } catch (error) {
         console.error('Error loading timer state:', error);
       }
@@ -49,10 +55,13 @@ export const TimerProvider = ({ children }) => {
       currentGoal,
       focusDuration,
       breakDuration,
-      sessionsCompleted
+      sessionsCompleted,
+      sessionPlan,
+      currentSessionIndex,
+      skipBreak
     };
     localStorage.setItem('timerState', JSON.stringify(state));
-  }, [timeLeft, isRunning, isBreak, currentGoal, focusDuration, breakDuration, sessionsCompleted]);
+  }, [timeLeft, isRunning, isBreak, currentGoal, focusDuration, breakDuration, sessionsCompleted, sessionPlan, currentSessionIndex, skipBreak]);
 
   // Timer countdown effect
   useEffect(() => {
@@ -74,22 +83,12 @@ export const TimerProvider = ({ children }) => {
   }, [isRunning, timeLeft]);
 
   const handleTimerComplete = useCallback(async () => {
-    setIsRunning(false);
-
-    // Show notification
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('DeepFocus', {
-        body: isBreak ? 'Break time is over!' : 'Focus session completed!',
-        icon: '/favicon.ico'
-      });
-    }
-
-    if (!isBreak) {
-      // Focus session completed - record it
+    // Record focus session if just completed
+    if (sessionPlan[currentSessionIndex]?.type === 'focus') {
       try {
         await sessionsAPI.create({
           goalId: currentGoal._id,
-          durationMinutes: focusDuration,
+          durationMinutes: sessionPlan[currentSessionIndex].duration,
           sessionType: 'focus'
         });
         setSessionsCompleted(prev => prev + 1);
@@ -98,32 +97,98 @@ export const TimerProvider = ({ children }) => {
       }
     }
 
-    // Auto-start break or next session
-    if (!isBreak) {
-      setIsBreak(true);
-      setTimeLeft(breakDuration * 60);
+    // Show notification with sound
+    if ('Notification' in window && Notification.permission === 'granted') {
+      let title = 'DeepFocus';
+      let body = '';
+      if (sessionPlan[currentSessionIndex]?.type === 'break') {
+        body = 'Break time is over! Focus session starting.';
+      } else {
+        body = 'Focus session completed! Break time starting.';
+      }
+      new Notification(title, {
+        body,
+        icon: '/favicon.ico'
+      });
+      // Play sound
+      try {
+        const audio = new window.Audio('/notification.mp3');
+        audio.play();
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    // Move to next session in plan
+    if (currentSessionIndex + 1 < sessionPlan.length) {
+      const next = sessionPlan[currentSessionIndex + 1];
+      setCurrentSessionIndex(currentSessionIndex + 1);
+      setIsBreak(next.type === 'break');
+      setTimeLeft(next.duration * 60);
       setIsRunning(true);
     } else {
+      // End of plan
+      setIsRunning(false);
       setIsBreak(false);
-      setTimeLeft(focusDuration * 60);
+      setCurrentSessionIndex(0);
+      setSessionPlan([]);
+      setTimeLeft(0);
     }
-  }, [isBreak, breakDuration, focusDuration, currentGoal]);
+  }, [currentSessionIndex, sessionPlan, currentGoal]);
 
   // Handle timer completion
   useEffect(() => {
-    if (timeLeft === 0 && currentGoal !== null) {
+    if (timeLeft === 0 && currentGoal !== null && sessionPlan.length > 0) {
       handleTimerComplete();
     }
-  }, [timeLeft, currentGoal, handleTimerComplete]);
+  }, [timeLeft, currentGoal, handleTimerComplete, sessionPlan]);
 
-  const startTimer = (goal, focus = 25, breakTime = 5) => {
+  // Helper to calculate session plan
+  const calculateSessionPlan = (goal) => {
+    const min = goal.dailyTargetMinutes;
+    const skip = goal.skipBreak;
+    let breaks = 0;
+    if (skip) breaks = 0;
+    else if (min >= 10 && min <= 25) breaks = 0;
+    else if (min >= 26 && min <= 74) breaks = 1;
+    else if (min >= 75 && min <= 99) breaks = 2;
+    else if (min >= 100 && min <= 124) breaks = 3;
+    else if (min >= 125 && min <= 149) breaks = 4;
+    else if (min >= 150 && min <= 174) breaks = 5;
+    else if (min >= 175 && min <= 199) breaks = 6;
+    else if (min >= 200 && min <= 224) breaks = 7;
+    else if (min >= 225 && min <= 240) breaks = 8;
+
+    let totalFocus = min;
+    let sessionLength = 25;
+    let plan = [];
+    if (breaks === 0) {
+      plan.push({ type: 'focus', duration: totalFocus });
+    } else {
+      // Split into focus/breaks
+      let numFocusSessions = Math.ceil(totalFocus / sessionLength);
+      let focusDurations = Array(numFocusSessions).fill(sessionLength);
+      let last = totalFocus - sessionLength * (numFocusSessions - 1);
+      if (last > 0) focusDurations[focusDurations.length - 1] = last;
+      // Distribute breaks evenly (all breaks are 5 min)
+      for (let i = 0; i < focusDurations.length; i++) {
+        plan.push({ type: 'focus', duration: focusDurations[i] });
+        if (i < breaks) plan.push({ type: 'break', duration: 5 });
+      }
+    }
+    return plan;
+  };
+
+  const startTimer = (goal) => {
     setCurrentGoal(goal);
-    setFocusDuration(focus);
-    setBreakDuration(breakTime);
-    setTimeLeft(focus * 60);
-    setIsRunning(true);
-    setIsBreak(false);
+    setSkipBreak(goal.skipBreak || false);
     setSessionsCompleted(0);
+    const plan = calculateSessionPlan(goal);
+    setSessionPlan(plan);
+    setCurrentSessionIndex(0);
+    setIsBreak(plan[0]?.type === 'break');
+    setTimeLeft((plan[0]?.duration || 0) * 60);
+    setIsRunning(true);
 
     // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
@@ -167,7 +232,10 @@ export const TimerProvider = ({ children }) => {
     pauseTimer,
     resumeTimer,
     resetTimer,
-    stopTimer
+    stopTimer,
+    sessionPlan,
+    currentSessionIndex,
+    skipBreak
   };
 
   return (

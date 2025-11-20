@@ -205,18 +205,80 @@ const Goals = () => {
                   />
                 </div>
 
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Daily Target (minutes) *
                   </label>
-                  <input
-                    type="number"
-                    value={formData.dailyTargetMinutes}
-                    onChange={(e) => setFormData({ ...formData, dailyTargetMinutes: parseInt(e.target.value) })}
-                    required
-                    min={1}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      onClick={() => {
+                        let step = formData.dailyTargetMinutes >= 50 ? 15 : 5;
+                        let next = formData.dailyTargetMinutes - step;
+                        if (next < 10) next = 10;
+                        setFormData({ ...formData, dailyTargetMinutes: next });
+                      }}
+                      aria-label="Decrease"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      value={formData.dailyTargetMinutes}
+                      min={10}
+                      max={240}
+                      step={formData.dailyTargetMinutes >= 50 ? 15 : 5}
+                      onChange={e => {
+                        let val = parseInt(e.target.value) || 10;
+                        if (val < 10) val = 10;
+                        if (val > 240) val = 240;
+                        setFormData({ ...formData, dailyTargetMinutes: val });
+                      }}
+                      className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-center"
+                    />
+                    <button
+                      type="button"
+                      className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      onClick={() => {
+                        let step = formData.dailyTargetMinutes >= 50 ? 15 : 5;
+                        let next = formData.dailyTargetMinutes + step;
+                        if (next > 240) next = 240;
+                        setFormData({ ...formData, dailyTargetMinutes: next });
+                      }}
+                      aria-label="Increase"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <input
+                      id="skipBreak"
+                      type="checkbox"
+                      checked={formData.skipBreak || false}
+                      onChange={e => setFormData({ ...formData, skipBreak: e.target.checked })}
+                      className="mr-2"
+                    />
+                    <label htmlFor="skipBreak" className="text-sm text-gray-700">Skip break (focus all through)</label>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-600">
+                    {(() => {
+                      if (formData.skipBreak) return 'Breaks: 0 (skip break enabled)';
+                      const min = formData.dailyTargetMinutes;
+                      let breaks = 0;
+                      if (min >= 10 && min <= 25) breaks = 0;
+                      else if (min >= 26 && min <= 74) breaks = 1;
+                      else if (min >= 75 && min <= 99) breaks = 2;
+                      else if (min >= 100 && min <= 124) breaks = 3;
+                      else if (min >= 125 && min <= 149) breaks = 4;
+                      else if (min >= 150 && min <= 174) breaks = 5;
+                      else if (min >= 175 && min <= 199) breaks = 6;
+                      else if (min >= 200 && min <= 224) breaks = 7;
+                      else if (min >= 225 && min <= 240) breaks = 8;
+                      return `Breaks: ${breaks}`;
+                    })()}
+                  </div>
                 </div>
 
                 <div className="flex space-x-3 pt-4">
