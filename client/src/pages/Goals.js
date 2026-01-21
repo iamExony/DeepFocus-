@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { goalsAPI } from '../services/api';
-import { Plus, Edit2, Trash2, TrendingUp, Play } from 'lucide-react';
+import { Plus, Edit2, Trash2, TrendingUp, Play, X } from 'lucide-react';
 
 const Goals = () => {
   const navigate = useNavigate();
@@ -11,7 +11,8 @@ const Goals = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    dailyTargetMinutes: 60
+    dailyTargetMinutes: 60,
+    category: 'other'
   });
 
   useEffect(() => {
@@ -37,7 +38,7 @@ const Goals = () => {
       }
       setShowModal(false);
       setEditingGoal(null);
-      setFormData({ name: '', description: '', dailyTargetMinutes: 60 });
+      setFormData({ name: '', description: '', dailyTargetMinutes: 60, category: 'other' });
       fetchGoals();
     } catch (error) {
       console.error('Failed to save goal:', error);
@@ -49,7 +50,8 @@ const Goals = () => {
     setFormData({
       name: goal.name,
       description: goal.description || '',
-      dailyTargetMinutes: goal.dailyTargetMinutes
+      dailyTargetMinutes: goal.dailyTargetMinutes,
+      category: goal.category || 'other'
     });
     setShowModal(true);
   };
@@ -65,103 +67,107 @@ const Goals = () => {
     }
   };
 
+  const categoryLabels = {
+    work: { label: 'Work', color: 'bg-blue-50 text-blue-700' },
+    learning: { label: 'Learning', color: 'bg-purple-50 text-purple-700' },
+    fitness: { label: 'Fitness', color: 'bg-green-50 text-green-700' },
+    personal: { label: 'Personal', color: 'bg-amber-50 text-amber-700' },
+    other: { label: 'Other', color: 'bg-slate-100 text-slate-600' }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Your Goals</h1>
-            <p className="text-gray-600 mt-2">Create and manage your focus goals</p>
+            <h1 className="text-2xl font-semibold text-slate-900">Goals</h1>
+            <p className="text-slate-500 mt-1">Manage your focus goals</p>
           </div>
           <button
             onClick={() => {
               setEditingGoal(null);
-              setFormData({ name: '', description: '', dailyTargetMinutes: 60 });
+              setFormData({ name: '', description: '', dailyTargetMinutes: 60, category: 'other' });
               setShowModal(true);
             }}
-            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+            className="flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Goal
           </button>
         </div>
 
+        {/* Goals Grid */}
         {goals.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <TrendingUp className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No goals yet</h3>
-            <p className="text-gray-600 mb-6">Create your first goal to start tracking your progress</p>
+          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <TrendingUp className="w-6 h-6 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-medium text-slate-900 mb-2">No goals yet</h3>
+            <p className="text-slate-500 mb-6">Create your first goal to start tracking your focus sessions</p>
             <button
               onClick={() => setShowModal(true)}
-              className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
             >
-              Create Your First Goal
+              Create Goal
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {goals.map((goal) => (
-              <div key={goal._id} className="bg-white rounded-lg shadow hover:shadow-lg transition">
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-xl font-semibold text-gray-900">{goal.name}</h3>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(goal)}
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(goal._id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+              <div
+                key={goal._id}
+                className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition group"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-slate-900 truncate">{goal.name}</h3>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-1 ${categoryLabels[goal.category || 'other'].color}`}>
+                      {categoryLabels[goal.category || 'other'].label}
+                    </span>
                   </div>
-                  
-                  {goal.description && (
-                    <p className="text-gray-600 text-sm mb-4">{goal.description}</p>
-                  )}
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Daily Target:</span>
-                      <span className="font-semibold text-gray-900">{goal.dailyTargetMinutes} minutes</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Current Streak:</span>
-                      <span className="font-bold text-green-600 text-lg">{goal.currentStreak} days</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Longest Streak:</span>
-                      <span className="font-semibold text-blue-600">{goal.longestStreak} days</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Total Sessions:</span>
-                      <span className="font-semibold text-gray-900">{goal.totalSessionsCompleted}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Total Time:</span>
-                      <span className="font-semibold text-gray-900">
-                        {Math.floor(goal.totalMinutesCompleted / 60)}h {goal.totalMinutesCompleted % 60}m
-                      </span>
-                    </div>
+                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition">
+                    <button
+                      onClick={() => handleEdit(goal)}
+                      className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(goal._id)}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-
-                  <button
-                    onClick={() => navigate(`/timer/${goal._id}`)}
-                    className="mt-4 w-full flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Start Session
-                  </button>
                 </div>
+
+                {goal.description && (
+                  <p className="text-sm text-slate-500 mb-4 line-clamp-2">{goal.description}</p>
+                )}
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Daily Target</span>
+                    <span className="font-medium text-slate-900">{goal.dailyTargetMinutes} min</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Current Streak</span>
+                    <span className="font-semibold text-green-600">{goal.currentStreak} days</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Best Streak</span>
+                    <span className="font-medium text-blue-600">{goal.longestStreak} days</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => navigate(`/timer/${goal._id}`)}
+                  className="w-full flex items-center justify-center py-2.5 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Start Session
+                </button>
               </div>
             ))}
           </div>
@@ -169,134 +175,136 @@ const Goals = () => {
 
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {editingGoal ? 'Edit Goal' : 'Create New Goal'}
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl w-full max-w-md shadow-xl">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+                <h2 className="text-lg font-semibold text-slate-900">
+                  {editingGoal ? 'Edit Goal' : 'New Goal'}
                 </h2>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              
+
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Goal Name *
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Goal Name
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="e.g., Learn Spanish"
+                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., Learn React"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     Description
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    rows={2}
+                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                     placeholder="Optional description"
                   />
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Category
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="work">Work</option>
+                    <option value="learning">Learning</option>
+                    <option value="fitness">Fitness</option>
+                    <option value="personal">Personal</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Daily Target (minutes) *
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Daily Target (minutes)
                   </label>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3">
                     <button
                       type="button"
-                      className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 font-medium transition"
                       onClick={() => {
-                        let step = formData.dailyTargetMinutes >= 50 ? 15 : 5;
-                        let next = formData.dailyTargetMinutes - step;
-                        if (next < 10) next = 10;
+                        const current = formData.dailyTargetMinutes;
+                        let next;
+                        if (current > 50) {
+                          next = current - 15;
+                          if (next < 50) next = 50;
+                        } else {
+                          next = current - 5;
+                          if (next < 10) next = 10;
+                        }
                         setFormData({ ...formData, dailyTargetMinutes: next });
                       }}
-                      aria-label="Decrease"
                     >
-                      -
+                      −
                     </button>
                     <input
                       type="number"
                       value={formData.dailyTargetMinutes}
                       min={10}
                       max={240}
-                      step={formData.dailyTargetMinutes >= 50 ? 15 : 5}
                       onChange={e => {
                         let val = parseInt(e.target.value) || 10;
                         if (val < 10) val = 10;
                         if (val > 240) val = 240;
                         setFormData({ ...formData, dailyTargetMinutes: val });
                       }}
-                      className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-center"
+                      className="flex-1 px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 text-center font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <button
                       type="button"
-                      className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 font-medium transition"
                       onClick={() => {
-                        let step = formData.dailyTargetMinutes >= 50 ? 15 : 5;
-                        let next = formData.dailyTargetMinutes + step;
-                        if (next > 240) next = 240;
+                        const current = formData.dailyTargetMinutes;
+                        let next;
+                        if (current >= 50) {
+                          next = current + 15;
+                          if (next > 240) next = 240;
+                        } else {
+                          next = current + 5;
+                          if (next > 50) next = 50;
+                        }
                         setFormData({ ...formData, dailyTargetMinutes: next });
                       }}
-                      aria-label="Increase"
                     >
                       +
                     </button>
                   </div>
-                  <div className="flex items-center mt-2">
-                    <input
-                      id="skipBreak"
-                      type="checkbox"
-                      checked={formData.skipBreak || false}
-                      onChange={e => setFormData({ ...formData, skipBreak: e.target.checked })}
-                      className="mr-2"
-                    />
-                    <label htmlFor="skipBreak" className="text-sm text-gray-700">Skip break (focus all through)</label>
-                  </div>
-                  <div className="mt-2 text-sm text-gray-600">
-                    {(() => {
-                      if (formData.skipBreak) return 'Breaks: 0 (skip break enabled)';
-                      const min = formData.dailyTargetMinutes;
-                      let breaks = 0;
-                      if (min >= 10 && min <= 25) breaks = 0;
-                      else if (min >= 26 && min <= 74) breaks = 1;
-                      else if (min >= 75 && min <= 99) breaks = 2;
-                      else if (min >= 100 && min <= 124) breaks = 3;
-                      else if (min >= 125 && min <= 149) breaks = 4;
-                      else if (min >= 150 && min <= 174) breaks = 5;
-                      else if (min >= 175 && min <= 199) breaks = 6;
-                      else if (min >= 200 && min <= 224) breaks = 7;
-                      else if (min >= 225 && min <= 240) breaks = 8;
-                      return `Breaks: ${breaks}`;
-                    })()}
-                  </div>
+                  <p className="text-xs text-slate-500 mt-1.5">10-50 min: 5 min steps • 50-240 min: 15 min steps</p>
                 </div>
 
-                <div className="flex space-x-3 pt-4">
+                <div className="flex space-x-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowModal(false);
-                      setEditingGoal(null);
-                    }}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                    className="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
                   >
-                    {editingGoal ? 'Update' : 'Create'}
+                    {editingGoal ? 'Save Changes' : 'Create Goal'}
                   </button>
                 </div>
               </form>

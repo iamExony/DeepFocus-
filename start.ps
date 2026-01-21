@@ -20,12 +20,12 @@ if (-not (Test-Path ".env")) {
     Write-Host ""
     Write-Host "Copy the secret above and paste it into your .env file as JWT_SECRET" -ForegroundColor Yellow
     Write-Host ""
-    $null = Read-Host 'Press Enter after you have updated the .env file'
+    Read-Host "Press Enter after you've updated the .env file"
 }
 
 # Check if MongoDB is running
 Write-Host "Checking MongoDB connection..." -ForegroundColor Yellow
-$mongoCheck = & mongosh '--eval' 'db.version()' '--quiet' 2>&1
+$mongoCheck = & mongosh --eval "db.version()" --quiet 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "✓ MongoDB is running" -ForegroundColor Green
 } else {

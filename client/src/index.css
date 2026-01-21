@@ -2,60 +2,262 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Professional Design System for DeepFocus */
+
+/* Base styles */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #f8fafc;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - minimal design */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #94a3b8;
 }
 
-/* React Calendar customization */
+/* Typography utilities */
+.heading-1 {
+  @apply text-2xl font-semibold text-slate-900 tracking-tight;
+}
+
+.heading-2 {
+  @apply text-xl font-semibold text-slate-800;
+}
+
+.heading-3 {
+  @apply text-lg font-medium text-slate-700;
+}
+
+.body-text {
+  @apply text-sm text-slate-600;
+}
+
+.label-text {
+  @apply text-xs font-medium text-slate-500 uppercase tracking-wide;
+}
+
+/* Card component */
+.card {
+  @apply bg-white rounded-xl border border-slate-200 shadow-sm;
+}
+
+.card-hover {
+  @apply transition-shadow hover:shadow-md;
+}
+
+/* Button variants */
+.btn-primary {
+  @apply px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors;
+}
+
+.btn-ghost {
+  @apply px-4 py-2 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-100 transition-colors;
+}
+
+.btn-danger {
+  @apply px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors;
+}
+
+/* Input styling */
+.input-field {
+  @apply w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+}
+
+/* Badge variants */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-blue {
+  @apply bg-blue-50 text-blue-700;
+}
+
+.badge-green {
+  @apply bg-green-50 text-green-700;
+}
+
+.badge-yellow {
+  @apply bg-amber-50 text-amber-700;
+}
+
+.badge-purple {
+  @apply bg-purple-50 text-purple-700;
+}
+
+.badge-gray {
+  @apply bg-slate-100 text-slate-600;
+}
+
+/* React Calendar customization - clean design */
 .react-calendar {
   border: none !important;
   font-family: inherit !important;
+  background: transparent !important;
+}
+
+.react-calendar__tile {
+  border-radius: 8px !important;
+  padding: 10px !important;
 }
 
 .react-calendar__tile--active {
-  background: #0ea5e9 !important;
+  background: #3b82f6 !important;
   color: white !important;
 }
 
 .react-calendar__tile--hasActive {
-  background: #7dd3fc !important;
+  background: #dbeafe !important;
+}
+
+.react-calendar__navigation button {
+  font-weight: 500 !important;
+  color: #334155 !important;
+}
+
+.react-calendar__month-view__weekdays {
+  color: #64748b !important;
+  font-weight: 500 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
 }
 
 .completed-day {
   background: #22c55e !important;
   color: white !important;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .completed-day:hover {
   background: #16a34a !important;
+}
+
+/* Stat card component */
+.stat-card {
+  @apply card p-5;
+}
+
+.stat-value {
+  @apply text-2xl font-bold text-slate-900;
+}
+
+.stat-label {
+  @apply text-xs text-slate-500 mt-1;
+}
+
+/* Navigation link active state */
+.nav-link {
+  @apply flex items-center px-3 py-2 text-sm font-medium text-slate-600 rounded-lg transition-colors hover:bg-slate-100 hover:text-slate-900;
+}
+
+.nav-link-active {
+  @apply bg-blue-50 text-blue-700;
+}
+
+/* Table styling */
+.table-header {
+  @apply px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider bg-slate-50;
+}
+
+.table-cell {
+  @apply px-4 py-4 text-sm text-slate-900;
+}
+
+/* Divider */
+.divider {
+  @apply border-t border-slate-200;
+}
+
+/* Focus ring utility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+/* Mobile responsive utilities */
+@media (max-width: 640px) {
+  .heading-1 {
+    @apply text-xl;
+  }
+
+  .heading-2 {
+    @apply text-lg;
+  }
+
+  .stat-value {
+    @apply text-xl;
+  }
+
+  /* Ensure full width on mobile */
+  .mobile-full {
+    @apply w-full;
+  }
+
+  /* Stack elements on mobile */
+  .mobile-stack {
+    @apply flex-col;
+  }
+
+  /* Smaller padding on mobile */
+  .mobile-compact {
+    @apply p-4;
+  }
+}
+
+/* Safe area for notched phones */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Prevent text selection on interactive elements */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Touch target minimum size for mobile */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent overscroll bounce on iOS */
+body {
+  overscroll-behavior: none;
 }

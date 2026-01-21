@@ -10,7 +10,7 @@ const { calculateRank, calculateCoinsForCompletion } = require('../utils/rewards
 // Create new session
 router.post('/', auth, async (req, res) => {
   try {
-    const { goalId, durationMinutes, sessionType } = req.body;
+    const { goalId, durationMinutes, sessionType, notes } = req.body;
 
     // Verify goal belongs to user
     const goal = await Goal.findOne({ _id: goalId, userId: req.userId });
@@ -23,7 +23,8 @@ router.post('/', auth, async (req, res) => {
       userId: req.userId,
       goalId,
       durationMinutes,
-      sessionType: sessionType || 'focus'
+      sessionType: sessionType || 'focus',
+      notes: notes || ''
     });
 
     await session.save();
@@ -162,6 +163,28 @@ router.get('/stats', auth, async (req, res) => {
       averageSessionLength: totalSessions > 0 ? Math.round(totalMinutes / totalSessions) : 0,
       period: parseInt(period)
     });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Update session notes
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const { notes } = req.body;
+    
+    const session = await Session.findOne({ _id: req.params.id, userId: req.userId });
+    
+    if (!session) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
+
+    if (notes !== undefined) {
+      session.notes = notes.substring(0, 500); // Limit to 500 chars
+    }
+
+    await session.save();
+    res.json(session);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

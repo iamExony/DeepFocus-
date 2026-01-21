@@ -25,6 +25,7 @@ const sessionRoutes = require('./routes/sessions');
 const progressRoutes = require('./routes/progress');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
+const exportRoutes = require('./routes/export');
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -33,6 +34,7 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/export', exportRoutes);
 
 // Streak checker - runs daily at midnight
 const streakChecker = require('./utils/streakChecker');

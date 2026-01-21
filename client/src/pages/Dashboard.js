@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { goalsAPI, progressAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Target, Clock, TrendingUp, Award, Calendar, Plus } from 'lucide-react';
+import { Target, Clock, TrendingUp, Calendar, Plus, Play, ChevronRight } from 'lucide-react';
 
 const Dashboard = () => {
   const [goals, setGoals] = useState([]);
@@ -36,163 +36,190 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl text-gray-600">Loading dashboard...</div>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="text-slate-500">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Welcome Section */}
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.firstName}!</h1>
-          <p className="text-gray-600 mt-2">Track your focus sessions and build streaks</p>
+          <h1 className="text-2xl font-semibold text-slate-900">
+            Welcome back, {user?.firstName}
+          </h1>
+          <p className="text-slate-500 mt-1">Here's your focus overview</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Active Goals</p>
-                <p className="text-3xl font-bold text-primary-600">{stats?.totalActiveGoals || 0}</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Active Goals</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{stats?.totalActiveGoals || 0}</p>
               </div>
-              <Target className="w-12 h-12 text-primary-600 opacity-20" />
+              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Target className="w-5 h-5 text-blue-600" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Current Streaks</p>
-                <p className="text-3xl font-bold text-green-600">{stats?.totalStreakDays || 0}</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Streak Days</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{stats?.totalStreakDays || 0}</p>
               </div>
-              <TrendingUp className="w-12 h-12 text-green-600 opacity-20" />
+              <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Minutes</p>
-                <p className="text-3xl font-bold text-blue-600">{stats?.totalMinutes || 0}</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Minutes</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{stats?.totalMinutes || 0}</p>
               </div>
-              <Clock className="w-12 h-12 text-blue-600 opacity-20" />
+              <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-purple-600" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">This Month</p>
-                <p className="text-3xl font-bold text-purple-600">{stats?.thisMonthCompletedDays || 0}</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">This Month</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{stats?.thisMonthCompletedDays || 0}</p>
               </div>
-              <Calendar className="w-12 h-12 text-purple-600 opacity-20" />
+              <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-amber-600" />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Goals List */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Your Goals</h2>
-            <button
-              onClick={() => navigate('/goals')}
-              className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Goal
-            </button>
-          </div>
-          <div className="p-6">
-            {goals.length === 0 ? (
-              <div className="text-center py-12">
-                <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">No goals yet. Create your first goal to get started!</p>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Goals Section */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl border border-slate-200">
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-900">Your Goals</h2>
                 <button
                   onClick={() => navigate('/goals')}
-                  className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                  className="flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition"
                 >
-                  Create Goal
+                  <Plus className="w-4 h-4 mr-1" />
+                  New Goal
                 </button>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {goals.map((goal) => (
-                  <div
-                    key={goal._id}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-primary-500 cursor-pointer transition"
-                    onClick={() => navigate(`/timer/${goal._id}`)}
-                  >
-                    <h3 className="font-semibold text-gray-900 mb-2">{goal.name}</h3>
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center justify-between">
-                        <span>Daily Target:</span>
-                        <span className="font-medium">{goal.dailyTargetMinutes} min</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>Current Streak:</span>
-                        <span className="font-bold text-green-600">{goal.currentStreak} days</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>Best Streak:</span>
-                        <span className="font-medium text-blue-600">{goal.longestStreak} days</span>
-                      </div>
+              
+              <div className="p-5">
+                {goals.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                      <Target className="w-6 h-6 text-slate-400" />
                     </div>
+                    <p className="text-slate-600 mb-4">No goals yet. Create your first one!</p>
                     <button
-                      className="mt-4 w-full py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/timer/${goal._id}`);
-                      }}
+                      onClick={() => navigate('/goals')}
+                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
                     >
-                      Start Session
+                      Create Goal
                     </button>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Today's Progress */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Today's Progress</h2>
-          </div>
-          <div className="p-6">
-            {dailyProgress.length === 0 ? (
-              <p className="text-gray-600 text-center py-8">No progress tracked today yet</p>
-            ) : (
-              <div className="space-y-4">
-                {dailyProgress.map((progress) => (
-                  <div key={progress._id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-gray-900">{progress.goalId?.name}</h3>
-                      {progress.isCompleted && (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
-                          Completed
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>{progress.minutesCompleted} / {progress.targetMinutes} minutes</span>
-                      <span className="font-medium text-yellow-600">+{progress.coinsEarned} coins</span>
-                    </div>
-                    <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                ) : (
+                  <div className="space-y-3">
+                    {goals.slice(0, 5).map((goal) => (
                       <div
-                        className="bg-primary-600 h-2 rounded-full"
-                        style={{
-                          width: `${Math.min((progress.minutesCompleted / progress.targetMinutes) * 100, 100)}%`
-                        }}
-                      />
-                    </div>
+                        key={goal._id}
+                        className="flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:border-blue-300 hover:bg-slate-50 cursor-pointer transition group"
+                        onClick={() => navigate(`/timer/${goal._id}`)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-slate-900 truncate">{goal.name}</h3>
+                          <div className="flex items-center space-x-4 mt-1 text-sm text-slate-500">
+                            <span>{goal.dailyTargetMinutes} min/day</span>
+                            <span className="text-green-600 font-medium">{goal.currentStreak} day streak</span>
+                          </div>
+                        </div>
+                        <button
+                          className="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/timer/${goal._id}`);
+                          }}
+                        >
+                          <Play className="w-4 h-4 ml-0.5" />
+                        </button>
+                      </div>
+                    ))}
+                    {goals.length > 5 && (
+                      <button
+                        onClick={() => navigate('/goals')}
+                        className="w-full py-3 text-sm text-slate-500 hover:text-blue-600 transition flex items-center justify-center"
+                      >
+                        View all goals
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </button>
+                    )}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+            </div>
+          </div>
+
+          {/* Today's Progress */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl border border-slate-200">
+              <div className="px-5 py-4 border-b border-slate-200">
+                <h2 className="text-lg font-semibold text-slate-900">Today's Progress</h2>
+              </div>
+              
+              <div className="p-5">
+                {dailyProgress.length === 0 ? (
+                  <p className="text-slate-500 text-sm text-center py-8">
+                    No progress today yet
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {dailyProgress.map((progress) => (
+                      <div key={progress._id}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-slate-900 truncate">
+                            {progress.goalId?.name}
+                          </span>
+                          {progress.isCompleted && (
+                            <span className="px-2 py-0.5 bg-green-50 text-green-700 text-xs font-medium rounded-full">
+                              Done
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
+                          <span>{progress.minutesCompleted} / {progress.targetMinutes} min</span>
+                          <span className="text-amber-600">+{progress.coinsEarned}</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5">
+                          <div
+                            className={`h-1.5 rounded-full transition-all ${
+                              progress.isCompleted ? 'bg-green-500' : 'bg-blue-500'
+                            }`}
+                            style={{
+                              width: `${Math.min((progress.minutesCompleted / progress.targetMinutes) * 100, 100)}%`
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

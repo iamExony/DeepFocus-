@@ -23,6 +23,11 @@ const sessionSchema = new mongoose.Schema({
     type: String,
     enum: ['focus', 'break'],
     default: 'focus'
+  },
+  notes: {
+    type: String,
+    trim: true,
+    maxlength: 500
   }
 });
 

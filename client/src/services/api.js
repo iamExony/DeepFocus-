@@ -35,6 +35,10 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (token, password) => api.post('/auth/reset-password', { token, password }),
+  verifyEmail: (token) => api.get(`/auth/verify-email/${token}`),
+  resendVerification: (email) => api.post('/auth/resend-verification', { email }),
 };
 
 // Goals API
@@ -52,6 +56,7 @@ export const sessionsAPI = {
   create: (data) => api.post('/sessions', data),
   getAll: (params) => api.get('/sessions', { params }),
   getStats: (params) => api.get('/sessions/stats', { params }),
+  update: (id, data) => api.put(`/sessions/${id}`, data),
 };
 
 // Progress API
@@ -75,6 +80,12 @@ export const adminAPI = {
   updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
   getSystemStats: () => api.get('/admin/stats/system'),
+};
+
+// Export API
+export const exportAPI = {
+  downloadCSV: () => `${API_URL}/export/csv`,
+  downloadJSON: () => `${API_URL}/export/json`,
 };
 
 export default api;

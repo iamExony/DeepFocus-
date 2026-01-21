@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactCalendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { progressAPI, goalsAPI } from '../services/api';
-import { Trophy, Flame, Calendar as CalendarIcon } from 'lucide-react';
+import { Trophy, Flame, Target } from 'lucide-react';
 
 const Calendar = () => {
   const [calendarData, setCalendarData] = useState({});
@@ -80,54 +80,61 @@ const Calendar = () => {
   const stats = getTotalStats();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <CalendarIcon className="w-8 h-8 mr-3 text-primary-600" />
-            Progress Calendar
-          </h1>
-          <p className="text-gray-600 mt-2">Track your daily achievements and streaks</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Calendar</h1>
+          <p className="text-slate-500 mt-1">Track your daily achievements</p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Completed Days</p>
-                <p className="text-3xl font-bold text-green-600">{stats.totalDays}</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Completed Days</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{stats.totalDays}</p>
               </div>
-              <Trophy className="w-12 h-12 text-green-600 opacity-20" />
+              <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-green-600" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Coins Earned</p>
-                <p className="text-3xl font-bold text-yellow-600">{stats.totalCoins}</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Coins Earned</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{stats.totalCoins}</p>
               </div>
-              <div className="text-5xl">🪙</div>
+              <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="8" strokeWidth="2" />
+                  <path strokeWidth="2" d="M12 8v8M9 12h6" />
+                </svg>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Active Goals</p>
-                <p className="text-3xl font-bold text-primary-600">{goals.length}</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Active Goals</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{goals.length}</p>
               </div>
-              <Flame className="w-12 h-12 text-primary-600 opacity-20" />
+              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Target className="w-5 h-5 text-blue-600" />
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-6">
           {/* Calendar */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Progress</h2>
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">Your Progress</h2>
               <div className="flex justify-center">
                 <ReactCalendar
                   onChange={setSelectedDate}
@@ -137,82 +144,70 @@ const Calendar = () => {
                   className="w-full border-0"
                 />
               </div>
-              <div className="mt-6 flex items-center space-x-4 text-sm">
+              <div className="mt-6 flex items-center space-x-6 text-sm">
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-green-500 rounded mr-2"></div>
-                  <span className="text-gray-600">Completed day</span>
+                  <div className="w-3 h-3 bg-green-500 rounded mr-2"></div>
+                  <span className="text-slate-600">Completed</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-gray-200 rounded mr-2"></div>
-                  <span className="text-gray-600">Incomplete</span>
+                  <div className="w-3 h-3 bg-slate-200 rounded mr-2"></div>
+                  <span className="text-slate-600">Incomplete</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Selected Day Details */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Selected Day */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <h2 className="text-sm font-semibold text-slate-900 mb-3">
                 {selectedDate.toLocaleDateString('en-US', { 
                   weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
+                  month: 'short',
                   day: 'numeric'
                 })}
               </h2>
 
               {selectedDateData.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p>No activities on this day</p>
-                </div>
+                <p className="text-sm text-slate-500 py-4 text-center">No activities</p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {selectedDateData.map((activity, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-gray-900">{activity.goalName}</h3>
-                        <Trophy className="w-5 h-5 text-green-500" />
+                    <div key={index} className="p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-slate-900 text-sm">{activity.goalName}</span>
+                        <Trophy className="w-4 h-4 text-green-500" />
                       </div>
-                      <div className="space-y-1 text-sm text-gray-600">
-                        <div className="flex justify-between">
-                          <span>Minutes completed:</span>
-                          <span className="font-medium">{activity.minutesCompleted}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Coins earned:</span>
-                          <span className="font-bold text-yellow-600">+{activity.coinsEarned}</span>
-                        </div>
+                      <div className="flex items-center justify-between text-xs text-slate-500">
+                        <span>{activity.minutesCompleted} min</span>
+                        <span className="text-amber-600 font-medium">+{activity.coinsEarned}</span>
                       </div>
                     </div>
                   ))}
-                  
-                  <div className="border-t border-gray-200 pt-4 mt-4">
-                    <div className="flex justify-between items-center font-semibold">
-                      <span className="text-gray-900">Total Coins:</span>
-                      <span className="text-yellow-600 text-lg">
-                        +{selectedDateData.reduce((sum, act) => sum + act.coinsEarned, 0)}
-                      </span>
-                    </div>
+                  <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
+                    <span className="text-sm font-medium text-slate-700">Total Coins</span>
+                    <span className="text-amber-600 font-bold">
+                      +{selectedDateData.reduce((sum, act) => sum + act.coinsEarned, 0)}
+                    </span>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Current Goals */}
-            <div className="bg-white rounded-lg shadow p-6 mt-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Current Goals</h2>
+            {/* Goals List */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <h2 className="text-sm font-semibold text-slate-900 mb-3">Active Goals</h2>
               {goals.length === 0 ? (
-                <p className="text-gray-500 text-sm">No active goals</p>
+                <p className="text-sm text-slate-500">No active goals</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {goals.map((goal) => (
-                    <div key={goal._id} className="border border-gray-200 rounded p-3">
-                      <div className="font-medium text-gray-900">{goal.name}</div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        Streak: <span className="font-bold text-green-600">{goal.currentStreak} days</span>
-                      </div>
+                    <div key={goal._id} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg">
+                      <span className="text-sm font-medium text-slate-900 truncate">{goal.name}</span>
+                      <span className="text-xs text-green-600 font-semibold whitespace-nowrap ml-2">
+                        {goal.currentStreak}d
+                      </span>
                     </div>
                   ))}
                 </div>

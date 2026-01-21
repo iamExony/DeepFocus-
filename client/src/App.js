@@ -12,6 +12,9 @@ import Timer from './pages/Timer';
 import Calendar from './pages/Calendar';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 
 // Components
 import Navbar from './components/Navbar';
@@ -45,6 +48,9 @@ function AppRoutes() {
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
         <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
+        <Route path="/forgot-password" element={user ? <Navigate to="/dashboard" /> : <ForgotPassword />} />
+        <Route path="/reset-password/:token" element={user ? <Navigate to="/dashboard" /> : <ResetPassword />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
         
         <Route
           path="/dashboard"

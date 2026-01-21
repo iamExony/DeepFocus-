@@ -18,7 +18,13 @@ const goalSchema = new mongoose.Schema({
   dailyTargetMinutes: {
     type: Number,
     required: true,
-    min: 1
+    min: 10,
+    max: 240
+  },
+  category: {
+    type: String,
+    enum: ['work', 'learning', 'fitness', 'personal', 'other'],
+    default: 'other'
   },
   currentStreak: {
     type: Number,
@@ -42,6 +48,10 @@ const goalSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  skipBreak: {
+    type: Boolean,
+    default: false
   },
   createdAt: {
     type: Date,

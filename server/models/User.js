@@ -36,6 +36,13 @@ const userSchema = new mongoose.Schema({
     enum: ['Novice', 'Beginner', 'Intermediate', 'Advanced', 'Expert', 'Master'],
     default: 'Novice'
   },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationToken: {
+    type: String
+  },
   createdAt: {
     type: Date,
     default: Date.now

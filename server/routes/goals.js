@@ -33,13 +33,26 @@ router.get('/:id', auth, async (req, res) => {
 // Create new goal
 router.post('/', auth, async (req, res) => {
   try {
-    const { name, description, dailyTargetMinutes } = req.body;
+    const { name, description, dailyTargetMinutes, skipBreak, category } = req.body;
+
+    // Validate inputs
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ message: 'Goal name is required' });
+    }
+    if (!dailyTargetMinutes || dailyTargetMinutes < 10 || dailyTargetMinutes > 240) {
+      return res.status(400).json({ message: 'Daily target must be between 10 and 240 minutes' });
+    }
+
+    const validCategories = ['work', 'learning', 'fitness', 'personal', 'other'];
+    const goalCategory = validCategories.includes(category) ? category : 'other';
 
     const goal = new Goal({
       userId: req.userId,
-      name,
-      description,
-      dailyTargetMinutes
+      name: name.trim(),
+      description: description ? description.trim() : '',
+      dailyTargetMinutes,
+      skipBreak: skipBreak || false,
+      category: goalCategory
     });
 
     await goal.save();
@@ -52,7 +65,7 @@ router.post('/', auth, async (req, res) => {
 // Update goal
 router.put('/:id', auth, async (req, res) => {
   try {
-    const { name, description, dailyTargetMinutes, isActive } = req.body;
+    const { name, description, dailyTargetMinutes, isActive, skipBreak, category } = req.body;
     
     const goal = await Goal.findOne({ _id: req.params.id, userId: req.userId });
     
@@ -60,10 +73,20 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Goal not found' });
     }
 
-    if (name) goal.name = name;
-    if (description !== undefined) goal.description = description;
+    // Validate dailyTargetMinutes if provided
+    if (dailyTargetMinutes !== undefined && (dailyTargetMinutes < 10 || dailyTargetMinutes > 240)) {
+      return res.status(400).json({ message: 'Daily target must be between 10 and 240 minutes' });
+    }
+
+    if (name) goal.name = name.trim();
+    if (description !== undefined) goal.description = description.trim();
     if (dailyTargetMinutes) goal.dailyTargetMinutes = dailyTargetMinutes;
     if (isActive !== undefined) goal.isActive = isActive;
+    if (skipBreak !== undefined) goal.skipBreak = skipBreak;
+    if (category) {
+      const validCategories = ['work', 'learning', 'fitness', 'personal', 'other'];
+      if (validCategories.includes(category)) goal.category = category;
+    }
 
     await goal.save();
     res.json(goal);
