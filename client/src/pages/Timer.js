@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { goalsAPI } from '../services/api';
 import { useTimer } from '../context/TimerContext';
 import { useWindowTracker } from '../hooks/useWindowTracker';
-import { Play, Pause, RotateCcw, Monitor, MonitorOff, Camera, CameraOff, AlertTriangle, X } from 'lucide-react';
+import { Play, Pause, RotateCcw, Monitor, MonitorOff, AlertTriangle, X, Bell } from 'lucide-react';
 import * as faceapi from 'face-api.js';
 
 const Timer = () => {
@@ -11,8 +11,10 @@ const Timer = () => {
   const [userPresent, setUserPresent] = useState(true);
   const [alertAudio, setAlertAudio] = useState(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
-  const [faceTrackingEnabled, setFaceTrackingEnabled] = useState(false);
-  const [showTrackingOptions, setShowTrackingOptions] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
+  const [notificationPermission, setNotificationPermission] = useState(
+    'Notification' in window ? Notification.permission : 'denied'
+  );
 
   const { goalId } = useParams();
   const navigate = useNavigate();
@@ -43,13 +45,8 @@ const Timer = () => {
     stopTracking: stopWindowTracking,
     dismissAlert: dismissWindowAlert
   } = useWindowTracker({
-    onFocusLost: () => {
-      console.log('Window focus lost!');
-    },
-    onFocusRegained: () => {
-      console.log('Window focus regained');
-    },
-    enabled: isRunning && !isBreak
+    onFocusLost: () => console.log('Window focus lost!'),
+    onFocusRegained: () => console.log('Window focus regained')
   });
 
   // Fetch goal data on mount
@@ -80,9 +77,11 @@ const Timer = () => {
     }
   }, [currentGoal, goalId, navigate, stopTimer]);
 
-  // Start webcam for face detection when enabled
+  // Face detection is ALWAYS ON when timer is running (not during break)
+  // Start webcam automatically when focus session starts
   useEffect(() => {
-    if (faceTrackingEnabled && isRunning && !isBreak) {
+    if (isRunning && !isBreak) {
+      setCameraError(null);
       navigator.mediaDevices.getUserMedia({ video: true })
         .then((stream) => {
           if (videoRef.current) {
@@ -91,7 +90,7 @@ const Timer = () => {
         })
         .catch((err) => {
           console.error('Webcam error:', err);
-          setFaceTrackingEnabled(false);
+          setCameraError('Camera access denied. Face detection disabled.');
         });
     } else {
       if (videoRef.current && videoRef.current.srcObject) {
@@ -108,7 +107,7 @@ const Timer = () => {
         videoRef.current.srcObject = null;
       }
     };
-  }, [faceTrackingEnabled, isRunning, isBreak]);
+  }, [isRunning, isBreak]);
 
   // Load face-api.js models
   useEffect(() => {
@@ -139,47 +138,116 @@ const Timer = () => {
     };
   }, []);
 
-  // Face detection interval
+  // Face detection interval - always active during focus sessions
   useEffect(() => {
-    if (!faceTrackingEnabled || !modelsLoaded || !videoRef.current || !isRunning || isBreak) {
+    if (!modelsLoaded || !videoRef.current || !isRunning || isBreak || cameraError) {
       setUserPresent(true);
       return;
     }
 
     const interval = setInterval(async () => {
       if (videoRef.current && videoRef.current.readyState === 4) {
-        const detections = await faceapi.detectAllFaces(
-          videoRef.current,
-          new faceapi.TinyFaceDetectorOptions()
-        );
-        
-        if (detections.length === 0) {
-          setUserPresent(false);
-        } else {
-          setUserPresent(true);
+        try {
+          const detections = await faceapi.detectAllFaces(
+            videoRef.current,
+            new faceapi.TinyFaceDetectorOptions()
+          );
+          setUserPresent(detections.length > 0);
+        } catch (e) {
+          console.warn('Face detection error:', e);
         }
       }
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [faceTrackingEnabled, modelsLoaded, isRunning, isBreak]);
+  }, [modelsLoaded, isRunning, isBreak, cameraError]);
 
-  // Play/stop alert audio based on detection state
+  // Reference to track if we already showed notification for this absence
+  const lastNotificationRef = useRef(0);
+
+  // Show desktop notification helper
+  const showDesktopNotification = useCallback((title, body) => {
+    const now = Date.now();
+    // Only show notification once every 10 seconds to avoid spam
+    if (now - lastNotificationRef.current < 10000) return;
+    lastNotificationRef.current = now;
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        const notification = new Notification(title, {
+          body: body,
+          icon: '/favicon.ico',
+          tag: 'deepfocus-face-alert',
+          requireInteraction: true
+        });
+
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+
+        setTimeout(() => notification.close(), 10000);
+      } catch (e) {
+        console.warn('Notification error:', e);
+      }
+    }
+  }, []);
+
+  // Request notification permission on mount
+  useEffect(() => {
+    const checkPermission = () => {
+      if ('Notification' in window) {
+        setNotificationPermission(Notification.permission);
+      }
+    };
+    checkPermission();
+  }, []);
+
+  // Function to request notification permission
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      try {
+        const permission = await Notification.requestPermission();
+        setNotificationPermission(permission);
+        if (permission === 'granted') {
+          // Show a test notification
+          const testNotif = new Notification('✅ Notifications Enabled!', {
+            body: 'You will now receive alerts when you lose focus.',
+            icon: '/favicon.ico',
+            tag: 'deepfocus-test'
+          });
+          setTimeout(() => testNotif.close(), 5000);
+        }
+      } catch (e) {
+        console.error('Notification permission error:', e);
+      }
+    }
+  };
+
+  // Play/stop alert audio and show desktop notification based on detection state
   useEffect(() => {
     if (!alertAudio) return;
     
     const shouldAlert = isRunning && !isBreak && (
-      (faceTrackingEnabled && !userPresent) || 
+      !userPresent || 
       (isWindowTracking && !isWindowFocused)
     );
     
     if (shouldAlert) {
       alertAudio.play().catch(() => {});
+      
+      // Show desktop notification
+      if (!userPresent) {
+        showDesktopNotification(
+          '⚠️ DeepFocus Alert!',
+          'Face not detected! Please return to your focus session.'
+        );
+      }
     } else {
       alertAudio.pause();
       alertAudio.currentTime = 0;
     }
-  }, [alertAudio, userPresent, isWindowFocused, isRunning, isBreak, faceTrackingEnabled, isWindowTracking]);
+  }, [alertAudio, userPresent, isWindowFocused, isRunning, isBreak, isWindowTracking, showDesktopNotification]);
 
   const handleToggleTimer = () => {
     if (isRunning) {
@@ -216,7 +284,7 @@ const Timer = () => {
   
   // Check if any tracking alert is active
   const hasAlert = isRunning && !isBreak && (
-    (faceTrackingEnabled && !userPresent) || 
+    !userPresent || 
     (isWindowTracking && !isWindowFocused)
   );
 
@@ -235,13 +303,13 @@ const Timer = () => {
       
       {/* Alert Banner */}
       {hasAlert && (
-        <div className="fixed top-0 left-0 w-full bg-red-600 text-white py-3 px-4 z-50 flex items-center justify-between">
+        <div className="fixed top-0 left-0 w-full bg-red-600 text-white py-3 px-4 z-50 flex items-center justify-between safe-top">
           <div className="flex items-center">
             <AlertTriangle className="w-5 h-5 mr-2 animate-pulse" />
-            <span className="font-medium">
-              {faceTrackingEnabled && !userPresent && 'Face not detected! '}
+            <span className="font-medium text-sm sm:text-base">
+              {!userPresent && 'Face not detected! '}
               {isWindowTracking && !isWindowFocused && 'Window focus lost! '}
-              Return to your focus session.
+              Return to focus.
             </span>
           </div>
           <button 
@@ -252,7 +320,7 @@ const Timer = () => {
                 alertAudio.currentTime = 0;
               }
             }}
-            className="p-1 hover:bg-red-500 rounded"
+            className="p-2 hover:bg-red-500 rounded"
           >
             <X className="w-5 h-5" />
           </button>
@@ -264,107 +332,74 @@ const Timer = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-2">
+            <div>
               <span className="text-slate-700 font-medium">
                 {currentSession?.type === 'break' ? 'Break period' : 'Focus period'}
               </span>
-              <span className="text-slate-500 text-sm">
+              <span className="text-slate-500 text-sm ml-2">
                 ({currentSessionIndex + 1} of {sessionPlan.length || 1})
               </span>
             </div>
-            <button 
-              onClick={() => setShowTrackingOptions(!showTrackingOptions)}
-              className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-lg transition"
-              title="Tracking Options"
-            >
-              <Monitor className="w-5 h-5" />
-            </button>
           </div>
 
-          {/* Tracking Options Panel */}
-          {showTrackingOptions && (
-            <div className="mb-6 p-4 bg-slate-50 rounded-xl space-y-3">
-              <h3 className="text-sm font-semibold text-slate-700 mb-3">Focus Tracking</h3>
-              
-              {/* Face Detection Toggle */}
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
-                <div className="flex items-center space-x-3">
-                  {faceTrackingEnabled ? (
-                    <Camera className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <CameraOff className="w-5 h-5 text-slate-400" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">Face Detection</p>
-                    <p className="text-xs text-slate-500">Alert when you leave your desk</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setFaceTrackingEnabled(!faceTrackingEnabled)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    faceTrackingEnabled ? 'bg-green-600' : 'bg-slate-200'
-                  }`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                    faceTrackingEnabled ? 'translate-x-6' : 'translate-x-1'
-                  }`} />
-                </button>
-              </div>
-
-              {/* Window Tracking */}
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
-                <div className="flex items-center space-x-3">
-                  {isWindowTracking ? (
-                    <Monitor className="w-5 h-5 text-blue-600" />
-                  ) : (
-                    <MonitorOff className="w-5 h-5 text-slate-400" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">Window Tracking</p>
-                    <p className="text-xs text-slate-500">
-                      {isWindowTracking && selectedWindow 
-                        ? `Tracking: ${selectedWindow.label}` 
-                        : 'Select a window to track'}
-                    </p>
-                  </div>
-                </div>
-                {isWindowTracking ? (
-                  <button
-                    onClick={stopWindowTracking}
-                    className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition"
-                  >
-                    Stop
-                  </button>
-                ) : (
-                  <button
-                    onClick={startWindowTracking}
-                    className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
-                  >
-                    Select Window
-                  </button>
-                )}
-              </div>
-
-              {windowTrackingError && (
-                <p className="text-xs text-red-600 mt-2">{windowTrackingError}</p>
-              )}
-              
-              {/* Tracking Status */}
-              <div className="flex items-center space-x-4 text-xs text-slate-500 pt-2">
-                {faceTrackingEnabled && (
-                  <div className="flex items-center">
-                    <div className={`w-2 h-2 rounded-full mr-1.5 ${userPresent ? 'bg-green-500' : 'bg-red-500'}`} />
-                    Face: {userPresent ? 'Detected' : 'Not found'}
-                  </div>
-                )}
-                {isWindowTracking && (
-                  <div className="flex items-center">
-                    <div className={`w-2 h-2 rounded-full mr-1.5 ${isWindowFocused ? 'bg-green-500' : 'bg-red-500'}`} />
-                    Window: {isWindowFocused ? 'Focused' : 'Lost'}
-                  </div>
-                )}
-              </div>
+          {/* Tracking Status */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-4 text-xs">
+            <div className="flex items-center px-3 py-1.5 bg-slate-100 rounded-full">
+              <div className={`w-2 h-2 rounded-full mr-2 ${
+                cameraError ? 'bg-yellow-500' : (userPresent ? 'bg-green-500' : 'bg-red-500')
+              }`} />
+              <span className="text-slate-600">
+                {cameraError ? 'Camera off' : (userPresent ? 'Face detected' : 'Face not found')}
+              </span>
             </div>
+            {isWindowTracking && (
+              <div className="flex items-center px-3 py-1.5 bg-slate-100 rounded-full">
+                <div className={`w-2 h-2 rounded-full mr-2 ${isWindowFocused ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className="text-slate-600">
+                  {isWindowFocused ? 'Window focused' : 'Window lost'}
+                </span>
+              </div>
+            )}
+            {/* Notification Permission Status */}
+            {notificationPermission !== 'granted' ? (
+              <button
+                onClick={requestNotificationPermission}
+                className="flex items-center px-3 py-1.5 bg-amber-100 hover:bg-amber-200 rounded-full transition cursor-pointer"
+              >
+                <div className="w-2 h-2 rounded-full mr-2 bg-amber-500" />
+                <span className="text-amber-700 font-medium">Enable Notifications</span>
+              </button>
+            ) : (
+              <div className="flex items-center px-3 py-1.5 bg-green-100 rounded-full">
+                <div className="w-2 h-2 rounded-full mr-2 bg-green-500" />
+                <span className="text-green-700">Notifications on</span>
+              </div>
+            )}
+          </div>
+
+          {/* Window Tracking Button */}
+          <div className="flex justify-center mb-6">
+            {isWindowTracking ? (
+              <button
+                onClick={stopWindowTracking}
+                className="flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition"
+              >
+                <MonitorOff className="w-4 h-4 mr-2" />
+                Stop Window Tracking ({selectedWindow?.label?.slice(0, 20)}...)
+              </button>
+            ) : (
+              <button
+                onClick={startWindowTracking}
+                className="flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
+              >
+                <Monitor className="w-4 h-4 mr-2" />
+                Track a Window (Optional)
+              </button>
+            )}
+          </div>
+
+          {windowTrackingError && (
+            <p className="text-xs text-red-600 text-center mb-4">{windowTrackingError}</p>
           )}
 
           {/* Circular Timer */}
