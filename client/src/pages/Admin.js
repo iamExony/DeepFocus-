@@ -10,21 +10,18 @@ const Admin = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchStats();
-    fetchUsers();
-  }, [currentPage, searchTerm]);
 
-  const fetchStats = async () => {
+
+  const fetchStats = React.useCallback(async () => {
     try {
       const response = await adminAPI.getSystemStats();
       setStats(response.data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     }
-  };
+  }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = React.useCallback(async () => {
     setLoading(true);
     try {
       const response = await adminAPI.getUsers({
@@ -39,7 +36,12 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm]);
+
+  useEffect(() => {
+    fetchStats();
+    fetchUsers();
+  }, [fetchStats, fetchUsers]);
 
   const handleToggleAdmin = async (userId, currentStatus) => {
     if (window.confirm(`Are you sure you want to ${currentStatus ? 'remove' : 'grant'} admin privileges?`)) {

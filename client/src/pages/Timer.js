@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { goalsAPI } from '../services/api';
 import { useTimer } from '../context/TimerContext';
 import { useWindowTracker } from '../hooks/useWindowTracker';
-import { Play, Pause, RotateCcw, Monitor, MonitorOff, AlertTriangle, X, Bell } from 'lucide-react';
-import * as faceapi from 'face-api.js';
+import { Play, Pause, RotateCcw, Monitor, MonitorOff, AlertTriangle, X } from 'lucide-react';
+// face-api.js loaded via CDN in index.html
+const faceapi = window.faceapi;
 
 const Timer = () => {
   const videoRef = useRef(null);
@@ -100,11 +101,12 @@ const Timer = () => {
       }
     }
 
+    const currentVideoRef = videoRef.current;
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = videoRef.current.srcObject.getTracks();
+      if (currentVideoRef && currentVideoRef.srcObject) {
+        const tracks = currentVideoRef.srcObject.getTracks();
         tracks.forEach(track => track.stop());
-        videoRef.current.srcObject = null;
+        currentVideoRef.srcObject = null;
       }
     };
   }, [isRunning, isBreak]);
@@ -263,20 +265,13 @@ const Timer = () => {
     resetTimer();
   };
 
-  const handleStopSession = () => {
-    stopTimer();
-    stopWindowTracking();
-  };
+
 
   const handleSkipBreak = () => {
     skipBreakSession();
   };
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+
 
   const currentSession = sessionPlan && sessionPlan.length > 0 ? sessionPlan[currentSessionIndex] : null;
   const sessionTotalSeconds = currentSession ? currentSession.duration * 60 : 1;

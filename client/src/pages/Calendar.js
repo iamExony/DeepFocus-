@@ -15,7 +15,8 @@ const Calendar = () => {
   }, []);
 
   useEffect(() => {
-    updateSelectedDateData();
+    const dateKey = selectedDate.toISOString().split('T')[0];
+    setSelectedDateData(calendarData[dateKey] || []);
   }, [selectedDate, calendarData]);
 
   const fetchData = async () => {
@@ -41,10 +42,7 @@ const Calendar = () => {
     }
   };
 
-  const updateSelectedDateData = () => {
-    const dateKey = selectedDate.toISOString().split('T')[0];
-    setSelectedDateData(calendarData[dateKey] || []);
-  };
+
 
   const tileClassName = ({ date }) => {
     const dateKey = date.toISOString().split('T')[0];

@@ -111,11 +111,13 @@ export const TimerProvider = ({ children }) => {
   useEffect(() => {
     if (!isHydrated) return;
     
-    if (isRunning && timeLeft > 0) {
+    if (isRunning) {
       intervalRef.current = setInterval(() => {
         setTimeLeft(prev => {
-          const newTime = prev - 1;
-          return newTime >= 0 ? newTime : 0;
+          if (prev <= 0) {
+            return 0;
+          }
+          return prev - 1;
         });
       }, 1000);
     }
