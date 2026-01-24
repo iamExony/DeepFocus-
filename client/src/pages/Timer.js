@@ -140,21 +140,40 @@ const Timer = () => {
     };
   }, []);
 
+  // Track consecutive missed detections to prevent immediate false alarms
+  const consecutiveMisses = useRef(0);
+
   // Face detection interval - always active during focus sessions
   useEffect(() => {
     if (!modelsLoaded || !videoRef.current || !isRunning || isBreak || cameraError) {
       setUserPresent(true);
+      consecutiveMisses.current = 0;
       return;
     }
 
     const interval = setInterval(async () => {
       if (videoRef.current && videoRef.current.readyState === 4) {
         try {
+          // Tuned parameters: inputSize 512 (better resolution), scoreThreshold 0.4 (more lenient)
           const detections = await faceapi.detectAllFaces(
             videoRef.current,
-            new faceapi.TinyFaceDetectorOptions()
+            new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.4 })
           );
-          setUserPresent(detections.length > 0);
+          
+          if (detections.length > 0) {
+            // Face detected - reset counter immediately
+            consecutiveMisses.current = 0;
+            setUserPresent(true);
+          } else {
+            // No face detected - increment counter
+            consecutiveMisses.current += 1;
+            console.log(`Face missing count: ${consecutiveMisses.current}/3`);
+            
+            // Only trigger absence after 3 consecutive misses (approx 6 seconds)
+            if (consecutiveMisses.current >= 3) {
+              setUserPresent(false);
+            }
+          }
         } catch (e) {
           console.warn('Face detection error:', e);
         }

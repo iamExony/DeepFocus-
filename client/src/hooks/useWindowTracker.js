@@ -23,7 +23,7 @@ export const useWindowTracker = ({ onFocusLost, onFocusRegained }) => {
   const notificationRef = useRef(null);
 
   // Settings
-  const STATIC_THRESHOLD = 3;
+  const STATIC_THRESHOLD = 10;
   const CHECK_INTERVAL_MS = 500;
 
   useEffect(() => {
